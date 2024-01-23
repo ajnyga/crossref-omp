@@ -33,6 +33,9 @@ msgstr "Scarica"
 msgid "plugins.importexport.crossref.error"
 msgstr "Errore"
 
+msgid "plugins.importexport.crossref.error.noUserCrecentials"
+msgstr "Errore: nel tab Impostazioni non sono state inserite credenziali"
+
 msgid "plugins.importexport.crossref.queued"
 msgstr "Da registrare"
 
