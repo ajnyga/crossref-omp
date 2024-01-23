@@ -1,0 +1,94 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: Stefano Bolelli Gallevi <stefano.bolelli@unimi.it>\n"
+"Language-Team: Italian <http://translate.pkp.sfu.ca/projects/ojs/\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2024-01-15T11:46:54-07:00\n"
+"PO-Revision-Date: 2024-01-15T11:46:54-07:00\n"
+"Language: it_IT\n"
+
+
+msgid "plugins.importexport.crossref.displayName"
+msgstr "Crossref XML Plugin"
+
+msgid "plugins.importexport.crossref.description"
+msgstr "Registra le proposte di OMP nel formato XML di Crossref."
+
+msgid "plugins.importexport.crossref.deposited"
+msgstr "Registrate"
+
+msgid "plugins.importexport.crossref.depositedSubmissions"
+msgstr "Proposte registrate"
+
+msgid "plugins.importexport.crossref.deposit"
+msgstr "Registra"
+
+msgid "plugins.importexport.crossref.export"
+msgstr "Scarica"
+
+msgid "plugins.importexport.crossref.error"
+msgstr "Errore"
+
+msgid "plugins.importexport.crossref.queued"
+msgstr "Da registrare"
+
+msgid "plugins.importexport.crossref.redeposit"
+msgstr "Registra di nuovo"
+
+msgid "plugins.importexport.crossref.submittedSubmissions"
+msgstr "Seleziona monografie da scaricare"
+
+msgid "plugins.importexport.crossref.results"
+msgstr "Risultati
+
+msgid "plugins.importexport.crossref.settings.description"
+msgstr "Descrizione"
+
+msgid "plugins.importexport.crossref.intro"
+msgstr "This plugin registers DOIs for monographs and chapters  for DOI provider <a href='https://crossref.org'>Crossref.org</a>."
+
+msgid "plugins.importexport.crossref.settings"
+msgstr "Impostazioni"
+
+msgid "plugins.importexport.crossref.settings.form.password"
+msgstr "Password"
+
+msgid "plugins.importexport.crossref.settings.form.password.description"
+msgstr "Inserisci la password impostata per la username che hai ricevuto da Crossref anche se stai usando le api di test"
+
+msgid "plugins.importexport.crossref.settings.form.username"
+msgstr "Crossref username"
+
+msgid "plugins.importexport.crossref.settings.form.usernameRequired"
+msgstr "Inserisci la username che hai ricevuto da Crossref."
+
+msgid "plugins.importexport.crossref.settings.form.testMode.description"
+msgstr "Usa l'API di test di CrossRef per la registrazione dei DOI. Non ti dimenticare di togliere questa opzione quando passi in produzione. "
+
+msgid "plugins.importexport.crossref.senderTask.name"
+msgstr "Operazione di registrazione automatica con Crossref"
+
+msgid "plugins.importexport.crossref.register.error.mdsError"
+msgstr "La registrazione non ha avuto successo! Il server di registrazione dei DOI ha restituito un errore."
+
+msgid "plugins.importexport.crossref.register.success"
+msgstr "La registratione ha avuto successo!"
+
+msgid "plugins.importexport.crossref.chapterDoiCount"
+msgstr "DOI dei capitoli"
+
+msgid "plugins.importexport.crossref.notice.noIsbn"
+msgstr "Nota bene! Nessun ISBN disponibile. Lo scarico di Crossref selezionerà 'noisbn'."
+
+msgid "plugins.importexport.crossref.displayName"
+msgstr "Crossref XML Plugin"
+
+msgid "plugins.importexport.crossref.monographsOrChapter"
+msgstr "Monografie / Capitoli"
+
+msgid "plugins.importexport.crossref.cliUsage"
+msgstr "<![CDATA[Usage: {$scriptName} {$pluginName} export [outputFileName] [journal_path] {issues|articles|galleys} objectId1 [objectId2] ... {$scriptName} {$pluginName} register [journal_path] {issues|articles|galleys} objectId1 [objectId2] ...]]>"
