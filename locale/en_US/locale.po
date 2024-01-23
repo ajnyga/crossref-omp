@@ -58,7 +58,7 @@ msgid "plugins.importexport.crossref.settings.form.password"
 msgstr "Password"
 
 msgid "plugins.importexport.crossref.settings.form.password.description"
-msgstr ""
+msgstr "Insert the password set for the username you got from Crossref even if you use the test api"
 
 msgid "plugins.importexport.crossref.settings.form.username"
 msgstr "Crossref username"
