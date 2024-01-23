@@ -1,0 +1,94 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: Diego José Macêdo \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2022-12-21T16:16:30-07:00\n"
+"PO-Revision-Date: 2022-12-21T07:16:52-07:00\n"
+"Language: \n"
+
+
+msgid "plugins.importexport.crossref.displayName"
+msgstr "Plugin Crossref XML "
+
+msgid "plugins.importexport.crossref.description"
+msgstr "Deposite as submissões no formato crossref XML do OMP."
+
+msgid "plugins.importexport.crossref.deposited"
+msgstr "Depositada"
+
+msgid "plugins.importexport.crossref.depositedSubmissions"
+msgstr "Submissões Depositadas"
+
+msgid "plugins.importexport.crossref.deposit"
+msgstr "Depósito"
+
+msgid "plugins.importexport.crossref.export"
+msgstr "Exportar"
+
+msgid "plugins.importexport.crossref.error"
+msgstr "Erro"
+
+msgid "plugins.importexport.crossref.queued"
+msgstr "Depositar"
+
+msgid "plugins.importexport.crossref.redeposit"
+msgstr "Deposite novamente"
+
+msgid "plugins.importexport.crossref.submittedSubmissions"
+msgstr "Selecione monografias para exportar"
+
+msgid "plugins.importexport.crossref.results"
+msgstr "Resultados"
+
+msgid "plugins.importexport.crossref.settings.description"
+msgstr "Descrição"
+
+msgid "plugins.importexport.crossref.intro"
+msgstr "Este plugin registra DOIs para monografias e capítulos para o provedor de DOI <a href='https://crossref.org'>Crossref.org</a>."
+
+msgid "plugins.importexport.crossref.settings"
+msgstr "Configurações"
+
+msgid "plugins.importexport.crossref.settings.form.password"
+msgstr "Senha"
+
+msgid "plugins.importexport.crossref.settings.form.password.description"
+msgstr ""
+
+msgid "plugins.importexport.crossref.settings.form.username"
+msgstr "Nome de usuário da Crossref"
+
+msgid "plugins.importexport.crossref.settings.form.usernameRequired"
+msgstr "Por favor, digite o nome de usuário que você obteve da Crossref."
+
+msgid "plugins.importexport.crossref.settings.form.testMode.description"
+msgstr "Use a API de teste Crossref para registro DOI. Não se esqueça de remover esta opção para a produção."
+
+msgid "plugins.importexport.crossref.senderTask.name"
+msgstr "Tarefa de registro automático Crossref"
+
+msgid "plugins.importexport.crossref.register.error.mdsError"
+msgstr "O registo não foi totalmente bem sucedido! O servidor de registro DOI retornou um erro."
+
+msgid "plugins.importexport.crossref.register.success"
+msgstr "O registro foi realizado com sucesso!"
+
+msgid "plugins.importexport.crossref.chapterDoiCount"
+msgstr "DOIs dos capítulos"
+
+msgid "plugins.importexport.crossref.notice.noIsbn"
+msgstr "Observação! Nenhum ISBN disponível. A exportação Crossref usará a seleção 'noisbn'."
+
+msgid "plugins.importexport.crossref.displayName"
+msgstr "Plugin Crossref XML "
+
+msgid "plugins.importexport.crossref.monographsOrChapter"
+msgstr ""Monografias / Capítulos""
+
+msgid "plugins.importexport.crossref.cliUsage"
+msgstr "<![CDATA[Uso: {$scriptName} {$pluginName} export [outputFileName] [journal_path] {issues|articles|galleys} objectId1 [objectId2] ... {$scriptName} {$pluginName} register [journal_path] {issues|articles|galleys} objectId1 [objectId2] ...]]>"
