@@ -33,6 +33,9 @@ msgstr "Export"
 msgid "plugins.importexport.crossref.error"
 msgstr "Error"
 
+msgid "plugins.importexport.crossref.error.noUserCrecentials"
+msgstr "Error: no credentials in Settings tab"
+
 msgid "plugins.importexport.crossref.queued"
 msgstr "To Deposit"
 
