@@ -17,6 +17,7 @@
 namespace APP\plugins\generic\crossref\classes;
 
 use APP\core\Application;
+use APP\facades\Repo;
 use PKP\components\forms\FieldHTML;
 use PKP\components\forms\FieldOptions;
 use PKP\components\forms\FieldText;
@@ -105,7 +106,7 @@ class CrossrefSettings extends \PKP\doi\RegistrationAgencySettings
     {
         $text = '';
 
-        $journalSettingsUrl = Application::get()->getDispatcher()->url(
+        $pressSettingsUrl = Application::get()->getDispatcher()->url(
             Application::get()->getRequest(),
             PKPApplication::ROUTE_PAGE,
             $context->getPath(),
@@ -113,14 +114,30 @@ class CrossrefSettings extends \PKP\doi\RegistrationAgencySettings
             'settings',
             ['context']
         );
+        $seriesSettingsUrl = Application::get()->getDispatcher()->url(
+            Application::get()->getRequest(),
+            PKPApplication::ROUTE_PAGE,
+            $context->getPath(),
+            'management',
+            'settings',
+            ['context#sections']
+        );
 
         $notices = [];
         if (!$context->getData('publisherInstitution')) {
-            $notices[] = __('plugins.importexport.crossref.error.publisherNotConfigured', ['journalSettingsUrl' => $journalSettingsUrl]);
+            $notices[] = __('plugins.importexport.crossref.error.publisherNotConfigured', ['pressSettingsUrl' => $pressSettingsUrl]);
         }
 
-        if (!$context->getData('onlineIssn') && !$context->getData('printIssn')) {
-            $notices[] = __('plugins.importexport.crossref.error.issnNotConfigured', ['journalSettingsUrl' => $journalSettingsUrl]);
+        $allSeries = Repo::section()
+            ->getCollector()
+            ->filterByContextIds([$context->getId()])
+            ->excludeInactive(true)
+            ->getMany();
+
+        foreach ($allSeries as $series) {
+            if (!$series->getData('onlineIssn') && !$series->getData('printIssn')) {
+                $notices[] = __('plugins.importexport.crossref.error.issnNotConfigured', ['seriesSettingsUrl' => $seriesSettingsUrl]);
+            }
         }
 
         if (!empty($notices)) {

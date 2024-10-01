@@ -14,8 +14,7 @@
  */
 
 namespace APP\plugins\generic\crossref;
-use APP\issue\Issue;
-use APP\journal\Journal;
+use APP\press\Press;
 use PKP\plugins\Plugin;
 
 class CrossrefExportDeployment
@@ -29,14 +28,11 @@ class CrossrefExportDeployment
     public const CROSSREF_XMLNS_AI = 'http://www.crossref.org/AccessIndicators.xsd';
     public const CROSSREF_XMLNS_XML = 'http://www.w3.org/XML/1998/namespace';
 
-    /** @var Journal The current import/export context */
+    /** @var Context The current import/export context */
     public $_context;
 
     /** @var Plugin The current import/export plugin */
     public $_plugin;
-
-    /** @var Issue */
-    public $_issue;
 
     public function getCache()
     {
@@ -191,23 +187,4 @@ class CrossrefExportDeployment
         return $this->_plugin;
     }
 
-    /**
-     * Set the import/export issue.
-     *
-     * @param \APP\issue\Issue $issue
-     */
-    public function setIssue($issue)
-    {
-        $this->_issue = $issue;
-    }
-
-    /**
-     * Get the import/export issue.
-     *
-     * @return \APP\issue\Issue
-     */
-    public function getIssue()
-    {
-        return $this->_issue;
-    }
 }

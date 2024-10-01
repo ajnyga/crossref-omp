@@ -1,15 +1,15 @@
 <?php
 
 /**
- * @file plugins/generic/crossref/filter/IssueCrossrefXmlFilter.php
+ * @file plugins/generic/crossref/filter/SeriesCrossrefXmlFilter.php
  *
  * Copyright (c) 2014-2022 Simon Fraser University
  * Copyright (c) 2000-2022 John Willinsky
  * Distributed under The MIT License. For full terms see the file LICENSE.
  *
- * @class IssueCrossrefXmlFilter
+ * @class SeriesCrossrefXmlFilter
  *
- * @brief Class that converts an Issue to a Crossref XML document.
+ * @brief Class that converts an Series to a Crossref XML document.
  */
 
 namespace APP\plugins\generic\crossref\filter;
@@ -18,7 +18,7 @@ use APP\core\Application;
 use APP\plugins\generic\crossref\CrossrefExportDeployment;
 use PKP\core\PKPApplication;
 
-class IssueCrossrefXmlFilter extends \PKP\plugins\importexport\native\filter\NativeExportFilter
+class SeriesCrossrefXmlFilter extends \PKP\plugins\importexport\native\filter\NativeExportFilter
 {
     /**
      * Constructor
@@ -27,7 +27,7 @@ class IssueCrossrefXmlFilter extends \PKP\plugins\importexport\native\filter\Nat
      */
     public function __construct($filterGroup)
     {
-        $this->setDisplayName('Crossref XML issue export');
+        $this->setDisplayName('Crossref XML series export');
         parent::__construct($filterGroup);
     }
 
@@ -37,7 +37,7 @@ class IssueCrossrefXmlFilter extends \PKP\plugins\importexport\native\filter\Nat
     /**
      * @see \PKP\filter\Filter::process()
      *
-     * @param array $pubObjects Array of Issues or Submissions
+     * @param array $pubObjects Array of Series or Submissions
      *
      * @return \DOMDocument
      */
@@ -62,7 +62,7 @@ class IssueCrossrefXmlFilter extends \PKP\plugins\importexport\native\filter\Nat
         $rootNode->appendChild($bodyNode);
 
         foreach ($pubObjects as $pubObject) {
-            // pubObject is either Issue or Submission
+            // pubObject is either Series or Submission
             $journalNode = $this->createJournalNode($doc, $pubObject);
             $bodyNode->appendChild($journalNode);
         }
@@ -70,7 +70,7 @@ class IssueCrossrefXmlFilter extends \PKP\plugins\importexport\native\filter\Nat
     }
 
     //
-    // Issue conversion functions
+    // Series conversion functions
     //
     /**
      * Create and return the root node 'doi_batch'.
@@ -129,7 +129,7 @@ class IssueCrossrefXmlFilter extends \PKP\plugins\importexport\native\filter\Nat
      * Create and return the journal node 'journal'.
      *
      * @param \DOMDocument $doc
-     * @param object $pubObject Issue or Submission
+     * @param object $pubObject Series or Submission
      *
      * @return \DOMElement
      */
@@ -138,7 +138,7 @@ class IssueCrossrefXmlFilter extends \PKP\plugins\importexport\native\filter\Nat
         $deployment = $this->getDeployment();
         $journalNode = $doc->createElementNS($deployment->getNamespace(), 'journal');
         $journalNode->appendChild($this->createJournalMetadataNode($doc));
-        $journalNode->appendChild($this->createJournalIssueNode($doc, $pubObject));
+        $journalNode->appendChild($this->createJournalSeriesNode($doc, $pubObject));
         return $journalNode;
     }
 
@@ -182,39 +182,39 @@ class IssueCrossrefXmlFilter extends \PKP\plugins\importexport\native\filter\Nat
     }
 
     /**
-     * Create and return the journal issue node 'journal_issue'.
+     * Create and return the journal series node 'journal_series'.
      *
      * @param \DOMDocument $doc
-     * @param \APP\issue\Issue $issue
+     * @param \APP\series\Series $series
      *
      * @return \DOMElement
      */
-    public function createJournalIssueNode($doc, $issue)
+    public function createJournalSeriesNode($doc, $series)
     {
         /** @var CrossrefExportDeployment */
         $deployment = $this->getDeployment();
         $context = $deployment->getContext();
-        $deployment->setIssue($issue);
+        $deployment->setSeries($series);
 
-        $journalIssueNode = $doc->createElementNS($deployment->getNamespace(), 'journal_issue');
-        if ($issue->getDatePublished()) {
-            $journalIssueNode->appendChild($this->createPublicationDateNode($doc, $issue->getDatePublished()));
+        $journalSeriesNode = $doc->createElementNS($deployment->getNamespace(), 'journal_series');
+        if ($series->getDatePublished()) {
+            $journalSeriesNode->appendChild($this->createPublicationDateNode($doc, $series->getDatePublished()));
         }
-        if ($issue->getVolume() && $issue->getShowVolume()) {
+        if ($series->getVolume() && $series->getShowVolume()) {
             $journalVolumeNode = $doc->createElementNS($deployment->getNamespace(), 'journal_volume');
-            $journalVolumeNode->appendChild($node = $doc->createElementNS($deployment->getNamespace(), 'volume', htmlspecialchars($issue->getVolume(), ENT_COMPAT, 'UTF-8')));
-            $journalIssueNode->appendChild($journalVolumeNode);
+            $journalVolumeNode->appendChild($node = $doc->createElementNS($deployment->getNamespace(), 'volume', htmlspecialchars($series->getVolume(), ENT_COMPAT, 'UTF-8')));
+            $journalSeriesNode->appendChild($journalVolumeNode);
         }
-        if ($issue->getNumber() && $issue->getShowNumber()) {
-            $journalIssueNode->appendChild($node = $doc->createElementNS($deployment->getNamespace(), 'issue', htmlspecialchars($issue->getNumber(), ENT_COMPAT, 'UTF-8')));
+        if ($series->getNumber() && $series->getShowNumber()) {
+            $journalSeriesNode->appendChild($node = $doc->createElementNS($deployment->getNamespace(), 'series', htmlspecialchars($series->getNumber(), ENT_COMPAT, 'UTF-8')));
         }
-        if ($issue->getDatePublished() && $issue->hasDoi()) {
+        if ($series->getDatePublished() && $series->hasDoi()) {
             $request = Application::get()->getRequest();
             $dispatcher = $this->_getDispatcher($request);
-            $url = $dispatcher->url($request, PKPApplication::ROUTE_PAGE, $context->getPath(), 'issue', 'view', [$issue->getBestIssueId()], null, null, true, '');
-            $journalIssueNode->appendChild($this->createDOIDataNode($doc, $issue->getDoi(), $url));
+            $url = $dispatcher->url($request, PKPApplication::ROUTE_PAGE, $context->getPath(), 'series', 'view', [$series->getBestSeriesId()], null, null, true, '');
+            $journalSeriesNode->appendChild($this->createDOIDataNode($doc, $series->getDoi(), $url));
         }
-        return $journalIssueNode;
+        return $journalSeriesNode;
     }
 
     /**

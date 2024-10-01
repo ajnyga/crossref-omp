@@ -17,7 +17,7 @@ namespace APP\plugins\generic\crossref;
 
 use APP\core\Application;
 use APP\facades\Repo;
-use APP\issue\Issue;
+use APP\section\Section;
 use APP\plugins\generic\crossref\classes\CrossrefSettings;
 use APP\plugins\IDoiRegistrationAgency;
 use APP\services\ContextService;
@@ -301,29 +301,29 @@ class CrossrefPlugin extends GenericPlugin implements IDoiRegistrationAgency
     }
 
     /**
-     * @param Issue[] $issues
+     * @param Series[] $series
      *
      */
-    public function exportIssues(array $issues, Context $context): array
+    public function exportSeries(array $series, Context $context): array
     {
         // Get filter and set objectsFileNamePart (see: PubObjectsExportPlugin::prepareAndExportPubObjects)
         $exportPlugin = $this->_getExportPlugin();
-        $filterName = $exportPlugin->getIssueFilter();
+        $filterName = $exportPlugin->getSeriesFilter();
         $xmlErrors = [];
 
-        $temporaryFileId = $exportPlugin->exportAsDownload($context, $issues, $filterName, 'issues', null, $xmlErrors);
+        $temporaryFileId = $exportPlugin->exportAsDownload($context, $series, $filterName, 'series', null, $xmlErrors);
         return ['temporaryFileId' => $temporaryFileId, 'xmlErrors' => $xmlErrors];
     }
 
     /**
-     * @param Issue[] $issues
+     * @param Series[] $series
      */
-    public function depositIssues(array $issues, Context $context): array
+    public function depositSeries(array $series, Context $context): array
     {
         $exportPlugin = $this->_getExportPlugin();
-        $filterName = $exportPlugin->getIssueFilter();
+        $filterName = $exportPlugin->getSeriesFilter();
         $responseMessage = '';
-        $status = $exportPlugin->exportAndDeposit($context, $issues, $filterName, $responseMessage);
+        $status = $exportPlugin->exportAndDeposit($context, $series, $filterName, $responseMessage);
 
         return [
             'hasErrors' => !$status,

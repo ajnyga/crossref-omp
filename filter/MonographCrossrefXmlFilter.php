@@ -28,7 +28,7 @@ use PKP\db\DAORegistry;
 use PKP\i18n\LocaleConversion;
 use PKP\submission\GenreDAO;
 
-class ArticleCrossrefXmlFilter extends IssueCrossrefXmlFilter
+class MonographCrossrefXmlFilter extends SeriesCrossrefXmlFilter
 {
     /**
      * Constructor
@@ -38,14 +38,14 @@ class ArticleCrossrefXmlFilter extends IssueCrossrefXmlFilter
     public function __construct($filterGroup)
     {
         parent::__construct($filterGroup);
-        $this->setDisplayName('Crossref XML article export');
+        $this->setDisplayName('Crossref XML book export');
     }
 
     //
     // Submission conversion functions
     //
     /**
-     * @copydoc IssueCrossrefXmlFilter::createJournalNode()
+     * @copydoc SeriesCrossrefXmlFilter::createJournalNode()
      */
     public function createJournalNode($doc, $pubObject)
     {
@@ -57,32 +57,32 @@ class ArticleCrossrefXmlFilter extends IssueCrossrefXmlFilter
     }
 
     /**
-     * Create and return the journal issue node 'journal_issue'.
+     * Create and return the journal series node 'journal_series'.
      *
      * @param DOMDocument $doc
      * @param Submission $submission
      *
      * @return DOMElement
      */
-    public function createJournalIssueNode($doc, $submission)
+    public function createJournalSeriesNode($doc, $submission)
     {
         /** @var CrossrefExportDeployment */
         $deployment = $this->getDeployment();
         $context = $deployment->getContext();
         $cache = $deployment->getCache();
         assert($submission instanceof Submission);
-        $issueId = $submission->getCurrentPublication()->getData('issueId');
-        if ($cache->isCached('issues', $issueId)) {
-            $issue = $cache->get('issues', $issueId);
+        $seriesId = $submission->getCurrentPublication()->getData('seriesId');
+        if ($cache->isCached('series', $seriesId)) {
+            $series = $cache->get('series', $seriesId);
         } else {
-            $issue = Repo::issue()->get($issueId);
-            $issue = $issue->getJournalId() == $context->getId() ? $issue : null;
-            if ($issue) {
-                $cache->add($issue, null);
+            $series = Repo::series()->get($seriesId);
+            $series = $series->getJournalId() == $context->getId() ? $series : null;
+            if ($series) {
+                $cache->add($series, null);
             }
         }
-        $journalIssueNode = parent::createJournalIssueNode($doc, $issue);
-        return $journalIssueNode;
+        $journalSeriesNode = parent::createJournalSeriesNode($doc, $series);
+        return $journalSeriesNode;
     }
 
     /**
@@ -103,8 +103,8 @@ class ArticleCrossrefXmlFilter extends IssueCrossrefXmlFilter
         $publication = $submission->getCurrentPublication();
         $locale = $publication->getData('locale');
 
-        // Issue should be set by now
-        $issue = $deployment->getIssue();
+        // Series should be set by now
+        $series = $deployment->getSeries();
 
         $journalArticleNode = $doc->createElementNS($deployment->getNamespace(), 'journal_article');
         $journalArticleNode->setAttribute('publication_type', 'full_text');

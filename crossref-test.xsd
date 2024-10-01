@@ -15,9 +15,9 @@
 	<!-- Bring in the common PKP import/export content -->
 	<include schemaLocation="../../../lib/pkp/xml/importexport.xsd" />
 
-	<element name="article" substitutionGroup="pkp:submission" />
+	<element name="monograph" substitutionGroup="pkp:submission" />
 
-	<element name="articles" substitutionGroup="pkp:submissions" />
+	<element name="monographs" substitutionGroup="pkp:submissions" />
 
 	<complexType name="submission">
 		<sequence>

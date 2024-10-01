@@ -16,7 +16,6 @@ namespace APP\plugins\generic\crossref;
 
 use APP\core\Application;
 use APP\facades\Repo;
-use APP\issue\Issue;
 use APP\journal\Journal;
 use APP\plugins\DOIPubIdExportPlugin;
 use APP\plugins\IDoiRegistrationAgency;
@@ -95,15 +94,7 @@ class CrossrefExportPlugin extends DOIPubIdExportPlugin
      */
     public function getSubmissionFilter()
     {
-        return 'article=>crossref-xml';
-    }
-
-    /**
-     * @copydoc PubObjectsExportPlugin::getIssueFilter()
-     */
-    public function getIssueFilter()
-    {
-        return 'issue=>crossref-xml';
+        return 'monograph=>crossref-xml';
     }
 
     /** Proxy to main plugin class's `getSetting` method */
@@ -274,7 +265,7 @@ class CrossrefExportPlugin extends DOIPubIdExportPlugin
 
     /**
      * @param Submission $objects
-     * @param Journal $context
+     * @param Contenxt $context
      * @param string $filename Export XML filename
      *
      * @throws GuzzleException
@@ -383,7 +374,7 @@ class CrossrefExportPlugin extends DOIPubIdExportPlugin
     /**
      * Check the Crossref APIs, if deposits and registration have been successful
      *
-     * @param Journal $context
+     * @param Context $context
      * @param DataObject $object The object getting deposited
      * @param int $status
      * @param string $batchId
@@ -392,11 +383,9 @@ class CrossrefExportPlugin extends DOIPubIdExportPlugin
      */
     public function updateDepositStatus($context, $object, $status, $batchId = null, $failedMsg = null, $successMsg = null)
     {
-        assert($object instanceof Submission || $object instanceof Issue);
+        assert($object instanceof Submission);
         if ($object instanceof Submission) {
             $doiIds = Repo::doi()->getDoisForSubmission($object->getId());
-        } else {
-            $doiIds = Repo::doi()->getDoisForIssue($object->getId(), true);
         }
 
         foreach ($doiIds as $doiId) {
@@ -425,11 +414,8 @@ class CrossrefExportPlugin extends DOIPubIdExportPlugin
     {
         foreach ($objects as $object) {
             // Get all DOIs for each object
-            // Check if submission or issue
             if ($object instanceof Submission) {
                 $doiIds = Repo::doi()->getDoisForSubmission($object->getId());
-            } else {
-                $doiIds = Repo::doi()->getDoisForIssue($object->getId, true);
             }
 
             foreach ($doiIds as $doiId) {
@@ -474,15 +460,13 @@ class CrossrefExportPlugin extends DOIPubIdExportPlugin
     }
 
     /**
-     * @param Submission|Issue $object
+     * @param Submission $object
      *
      */
     private function _getObjectFileNamePart(DataObject $object): string
     {
         if ($object instanceof Submission) {
             return 'articles-' . $object->getId();
-        } elseif ($object instanceof Issue) {
-            return 'issues-' . $object->getId();
         } else {
             return '';
         }
