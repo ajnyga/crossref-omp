@@ -19,7 +19,7 @@ msgid "plugins.importexport.crossref.displayName"
 msgstr "Crossref XML Export Plugin"
 
 msgid "plugins.importexport.crossref.description"
-msgstr "Export article metadata in Crossref XML format."
+msgstr "Export book and chapter metadata in Crossref XML format."
 
 msgid "plugins.generic.crossref.displayName"
 msgstr "Crossref Manager Plugin"
@@ -34,13 +34,10 @@ msgid "plugins.importexport.crossref.requirements.satisfied"
 msgstr "All plugin requirements are satisfied."
 
 msgid "plugins.importexport.crossref.error.publisherNotConfigured"
-msgstr "A journal publisher has not been configured! You must add a publisher institution on the <a href=\"{$journalSettingsUrl}\" target=\"_blank\">Journal Settings Page</a>."
-
-msgid "plugins.importexport.crossref.error.issnNotConfigured"
-msgstr "A journal ISSN has not been configured! You must add an ISSN on the <a href=\"{$journalSettingsUrl}\" target=\"_blank\">Journal Settings Page</a>."
+msgstr "A publisher has not been configured! You must add a publisher institution on the <a href=\"{$journalSettingsUrl}\" target=\"_blank\">Journal Settings Page</a>."
 
 msgid "plugins.importexport.crossref.error.noDOIContentObjects"
-msgstr "Articles are not selected for DOI assignment in the DOI public identifier plugin, so there is no deposit or export possibility in this plugin."
+msgstr "Books are not selected for DOI assignment in the DOI public identifier plugin, so there is no deposit or export possibility in this plugin."
 
 msgid "plugins.importexport.crossref.settings"
 msgstr "Crossref Settings"
