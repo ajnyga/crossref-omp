@@ -480,7 +480,16 @@ class CrossrefXmlFilter extends NativeExportFilter
 			if ($hasAltName && $altNameNode) {
 				$personNameNode->appendChild($altNameNode);
 			}
-
+            //Affiliation
+            if ($author->getAffiliation($locale)){
+                $affiliationText = htmlspecialchars(trim($author->getAffiliation($locale)), ENT_COMPAT, 'UTF-8');
+                $affiliationNode = $doc->createElementNS(
+                    $deployment->getNamespace(),
+                    'affiliation',
+                    $affiliationText
+                );
+                $personNameNode->appendChild($affiliationNode);
+            }
 			if ($author->getData('orcid')) {
 				$personNameNode->appendChild($node = $doc->createElementNS($deployment->getNamespace(), 'ORCID', $author->getData('orcid')));
 			}
