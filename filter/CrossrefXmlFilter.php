@@ -286,7 +286,7 @@ class CrossrefXmlFilter extends NativeExportFilter
             return $format->getIsAvailable() && 
             $format->getIsApproved();
         });
-        $this->appendTextMiningCollectionNodes($doc, $doiDataNode, $submission, $validFormats);    
+        $this->appendTextMiningCollectionNodes($doc, $doiDataNode, $submission, $validFormats, true);    
 		$bookMetadataNode->appendChild($doiDataNode);
 
 		return $bookMetadataNode;
@@ -300,7 +300,7 @@ class CrossrefXmlFilter extends NativeExportFilter
      * @param \APP\submission\Submission $submission
      * @param array $publicationFormats Array of \PKP\publicationFormats\PublicationFormat objects
      */
-    public function appendTextMiningCollectionNodes($doc, $doiDataNode, $submission, $validFormats)
+    public function appendTextMiningCollectionNodes($doc, $doiDataNode, $submission, $validFormats, $onlyMonographFiles = true)
     {
         try {
             $deployment = $this->getDeployment();
@@ -308,20 +308,27 @@ class CrossrefXmlFilter extends NativeExportFilter
             $request = Application::get()->getRequest();
             $dispatcher = $this->_getDispatcher($request);
     
-            // Obtener todos los archivos de prueba (proof) visibles
+            // Get all visible proof files
             $submissionFiles = Repo::submissionFile()
                 ->getCollector()
                 ->filterBySubmissionIds([$submission->getId()])
                 ->filterByFileStages([SubmissionFile::SUBMISSION_FILE_PROOF])
                 ->getMany()
                 ->filter(fn($file) => $file->getViewable());
-    
-            $monographFiles = $submissionFiles->filter(function ($file) {
-                return $file->getData('genreId') == 3;
-            });
+
+            $monographFileGenreIds = [3]; // ID for book manuscript
+            $chapterFileGenreIds = [4]; // ID for chapter manuscript
+                
+            $filteredFiles = $submissionFiles->filter(function ($file) use ($onlyMonographFiles, $monographFileGenreIds, $chapterFileGenreIds) {
+                $genreId = $file->getData('genreId');
+                return $file->getData('viewable') === true &&
+                       ($onlyMonographFiles
+                            ? in_array($genreId, $monographFileGenreIds)
+                            : in_array($genreId, $chapterFileGenreIds));
+            });            
     
             $filesByFormatId = [];
-            foreach ($monographFiles as $file) {
+            foreach ($filteredFiles as $file) {
                 $formatId = $file->getData('assocId');
                 if (!isset($filesByFormatId[$formatId])) {
                     $filesByFormatId[$formatId] = [];
@@ -368,8 +375,6 @@ class CrossrefXmlFilter extends NativeExportFilter
             error_log('Error in appendTextMiningCollectionNodes: ' . $e->getMessage());
         }
     }
-    
-      
 
     /**
      * Create and return the Crossref book series metadata node 'series_metadata'.
@@ -489,6 +494,13 @@ class CrossrefXmlFilter extends NativeExportFilter
         $doiDataNode = $doc->createElementNS($deployment->getNamespace(), "doi_data");
 		$doiDataNode->appendChild($node = $doc->createElementNS($deployment->getNamespace(), 'doi', $this->xmlEscape($doi)));
 		$doiDataNode->appendChild($node = $doc->createElementNS($deployment->getNamespace(), 'resource', $this->xmlEscape($url)));
+        // Publication formats
+        $publicationFormats = $publication->getData('publicationFormats');
+        $validFormats = array_filter($publicationFormats, function($format) {
+            return $format->getIsAvailable() && 
+            $format->getIsApproved();
+        });
+        $this->appendTextMiningCollectionNodes($doc, $doiDataNode, $submission, $validFormats, false); 
 		$contentItemNode->appendChild($doiDataNode);
 
 		return $contentItemNode;
