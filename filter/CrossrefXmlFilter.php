@@ -30,7 +30,7 @@ use PKP\core\PKPString;
 use PKP\filter\FilterGroup;
 use PKP\i18n\LocaleConversion;
 use PKP\plugins\importexport\native\filter\NativeExportFilter;
-use APP\file\SubmissionFile;
+use PKP\submissionFile\SubmissionFile;
 
 class CrossrefXmlFilter extends NativeExportFilter
 {
@@ -286,8 +286,7 @@ class CrossrefXmlFilter extends NativeExportFilter
             return $format->getIsAvailable() && 
             $format->getIsApproved();
         });
-        error_log(print_r($validFormats, true));
-        $this->appendTextMiningCollectionNodes($doc, $doiDataNode, $submission, $validFormats);
+        $this->appendTextMiningCollectionNodes($doc, $doiDataNode, $submission, $validFormats);    
 		$bookMetadataNode->appendChild($doiDataNode);
 
 		return $bookMetadataNode;
@@ -301,56 +300,76 @@ class CrossrefXmlFilter extends NativeExportFilter
      * @param \APP\submission\Submission $submission
      * @param array $publicationFormats Array of \PKP\publicationFormats\PublicationFormat objects
      */
-    public function appendTextMiningCollectionNodes($doc, $doiDataNode, $submission, $publicationFormats)
+    public function appendTextMiningCollectionNodes($doc, $doiDataNode, $submission, $validFormats)
     {
-        $deployment = $this->getDeployment();
-        $context = $deployment->getContext();
-        $request = Application::get()->getRequest();
-        $dispatcher = $this->_getDispatcher($request);
+        try {
+            $deployment = $this->getDeployment();
+            $context = $deployment->getContext();
+            $request = Application::get()->getRequest();
+            $dispatcher = $this->_getDispatcher($request);
     
-        $textMiningCollectionNode = $doc->createElementNS($deployment->getNamespace(), 'collection');
-        $textMiningCollectionNode->setAttribute('property', 'text-mining');
+            // Obtener todos los archivos de prueba (proof) visibles
+            $submissionFiles = Repo::submissionFile()
+                ->getCollector()
+                ->filterBySubmissionIds([$submission->getId()])
+                ->filterByFileStages([SubmissionFile::SUBMISSION_FILE_PROOF])
+                ->getMany()
+                ->filter(fn($file) => $file->getViewable());
     
-        // Obtener todos los archivos de prueba asociados a la monografía
-        $submissionFiles = Services::get('submissionFile')->getMany([
-            'submissionIds' => [$submission->getId()],
-            'fileStages' => [SubmissionFile::SUBMISSION_FILE_PROOF],
-        ]);
-    
-        foreach ($publicationFormats as $publicationFormat) {
-            $formatId = $publicationFormat->getId();
-    
-            // Filtrar archivos relacionados con este formato
-            $formatFiles = array_filter($submissionFiles, function($file) use ($formatId) {
-                return $file->getAssocType() === ASSOC_TYPE_PUBLICATION_FORMAT &&
-                       $file->getAssocId() === $formatId;
+            $monographFiles = $submissionFiles->filter(function ($file) {
+                return $file->getData('genreId') == 3;
             });
     
-            foreach ($formatFiles as $file) {
-                // Construir URL personalizada: /catalog/view/{submission_id}/{pub_format_id}/{file_id}
-                $resourceUrl = $dispatcher->url(
-                    $request,
-                    PKPApplication::ROUTE_PAGE,
-                    $context->getPath(),
-                    'catalog',
-                    'view',
-                    [$submission->getId(), $formatId, $file->getFileId()],
-                    null,
-                    null,
-                    true
-                );
-    
-                $itemNode = $doc->createElementNS($deployment->getNamespace(), 'item');
-                $resourceNode = $doc->createElementNS($deployment->getNamespace(), 'resource', $resourceUrl);
-                $resourceNode->setAttribute('mime_type', $file->getData('mimetype'));
-    
-                $itemNode->appendChild($resourceNode);
-                $textMiningCollectionNode->appendChild($itemNode);
+            $filesByFormatId = [];
+            foreach ($monographFiles as $file) {
+                $formatId = $file->getData('assocId');
+                if (!isset($filesByFormatId[$formatId])) {
+                    $filesByFormatId[$formatId] = [];
+                }
+                $filesByFormatId[$formatId][] = $file;
             }
-        }
     
-        $doiDataNode->appendChild($textMiningCollectionNode);
-    }    
+            $textMiningCollectionNode = $doc->createElementNS($deployment->getNamespace(), 'collection');
+            $textMiningCollectionNode->setAttribute('property', 'text-mining');
+    
+            foreach ($validFormats as $format) {
+                $formatId = $format->getId();
+                if (empty($filesByFormatId[$formatId])) {
+                    continue;
+                }
+    
+                foreach ($filesByFormatId[$formatId] as $file) {
+                    $url = $dispatcher->url(
+                        $request,
+                        PKPApplication::ROUTE_PAGE,
+                        $context->getPath(),
+                        'catalog',
+                        'view',
+                        [$submission->getId(), $formatId, $file->getId()],
+                        null,
+                        null,
+                        true
+                    );
+    
+                    $itemNode = $doc->createElementNS($deployment->getNamespace(), 'item');
+                    $resourceNode = $doc->createElementNS($deployment->getNamespace(), 'resource', $url);
+    
+                    if ($file->getData('mimetype')) {
+                        $resourceNode->setAttribute('mime_type', $file->getData('mimetype'));
+                    }
+    
+                    $itemNode->appendChild($resourceNode);
+                    $textMiningCollectionNode->appendChild($itemNode);
+                }
+            }
+    
+            $doiDataNode->appendChild($textMiningCollectionNode);
+        } catch (Throwable $e) {
+            error_log('Error in appendTextMiningCollectionNodes: ' . $e->getMessage());
+        }
+    }
+    
+      
 
     /**
      * Create and return the Crossref book series metadata node 'series_metadata'.
