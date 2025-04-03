@@ -30,6 +30,7 @@ use PKP\core\PKPString;
 use PKP\filter\FilterGroup;
 use PKP\i18n\LocaleConversion;
 use PKP\plugins\importexport\native\filter\NativeExportFilter;
+use PKP\submissionFile\SubmissionFile;
 
 class CrossrefXmlFilter extends NativeExportFilter
 {
@@ -280,10 +281,232 @@ class CrossrefXmlFilter extends NativeExportFilter
 		$doiDataNode = $doc->createElementNS($deployment->getNamespace(), "doi_data");
 		$doiDataNode->appendChild($node = $doc->createElementNS($deployment->getNamespace(), 'doi', $this->xmlEscape($doi)));
 		$doiDataNode->appendChild($node = $doc->createElementNS($deployment->getNamespace(), 'resource', $this->xmlEscape($url)));
+
+        // Publication formats
+        $validFormats = array_filter($publicationFormats, function($format) {
+            return $format->getIsAvailable() && 
+            $format->getIsApproved();
+        });
+        $this->appendAsCrawledCollectionNodes($doc, $doiDataNode, $submission, $validFormats, true, null);
+        $this->appendTextMiningCollectionNodes($doc, $doiDataNode, $submission, $validFormats, true, null);    
 		$bookMetadataNode->appendChild($doiDataNode);
 
 		return $bookMetadataNode;
 	}
+
+    /**
+     * Append the collection node 'collection property="crawler-based"' to the doi data node.
+     *
+     * This method generates a <collection> element with property="crawler-based" for the provided 
+     * publication formats of a submission. It includes only files that are marked as proof and viewable, 
+     * and filters further to only include PDF files (required for crawler compatibility, e.g. iParadigms).
+     *
+     * The resulting node is appended to the given <doi_data> node as part of the Crossref XML export.
+     *
+     * @param \DOMDocument $doc The XML document being generated.
+     * @param \DOMElement $doiDataNode The parent <doi_data> element to which the collection will be appended.
+     * @param \APP\submission\Submission $submission The submission object the files belong to.
+     * @param array $filteredFormats Array of \PKP\publicationFormats\PublicationFormat objects to process.
+     * @param bool $isMonograph Whether the files being processed belong to a monograph (true) or a chapter (false).
+     */
+    public function appendAsCrawledCollectionNodes($doc, $doiDataNode, $submission, $filteredFormats, $onlyMonographFiles = true, $chapterId = null)
+    {
+        try {
+            $deployment = $this->getDeployment();
+            $context = $deployment->getContext();
+            $request = Application::get()->getRequest();
+            $dispatcher = $this->_getDispatcher($request);
+
+            $submissionId = $submission->getId();
+
+            // Get all visible proof files
+            $submissionFiles = Repo::submissionFile()
+                ->getCollector()
+                ->filterBySubmissionIds([$submission->getId()])
+                ->filterByFileStages([SubmissionFile::SUBMISSION_FILE_PROOF])
+                ->getMany()
+                ->filter(fn($file) => $file->getViewable());                
+
+            $monographFileGenreIds = [3]; // ID for book manuscript
+            $chapterFileGenreIds = [4]; // ID for chapter manuscript
+
+            $filteredFiles = $submissionFiles->filter(function ($file) use ($onlyMonographFiles, $monographFileGenreIds, $chapterFileGenreIds, $chapterId) {
+                $genreId = $file->getData('genreId');
+                if (!$file->getData('viewable')) {
+                    return false;
+                }
+                if ($onlyMonographFiles) {
+                    return in_array($genreId, $monographFileGenreIds);
+                }
+                return in_array($genreId, $chapterFileGenreIds) &&
+                       $file->getData('chapterId') == $chapterId;
+            });  
+
+            $filesByFormatId = [];
+            foreach ($filteredFiles as $file) {
+                $formatId = $file->getData('assocId');
+                if (!isset($filesByFormatId[$formatId])) {
+                    $filesByFormatId[$formatId] = [];
+                }
+                $filesByFormatId[$formatId][] = $file;
+            }
+
+            $crawlerCollectionNode = null;
+
+            foreach ($filteredFormats as $format) {
+                $formatId = $format->getId();
+
+                if (empty($filesByFormatId[$formatId])) {
+                    continue;
+                }
+
+                foreach ($filesByFormatId[$formatId] as $file) {
+                    $mimeType = $file->getData('mimetype');
+
+                    if ($mimeType !== 'application/pdf') {
+                        continue;
+                    }
+
+                    if ($crawlerCollectionNode === null) {
+                        $crawlerCollectionNode = $doc->createElementNS($deployment->getNamespace(), 'collection');
+                        $crawlerCollectionNode->setAttribute('property', 'crawler-based');
+                    }                    
+
+                    $url = $dispatcher->url(
+                        $request,
+                        PKPApplication::ROUTE_PAGE,
+                        $context->getPath(),
+                        'catalog',
+                        'view',
+                        [$submissionId, $formatId, $file->getId()],
+                        null,
+                        null,
+                        true
+                    );
+
+                    $itemNode = $doc->createElementNS($deployment->getNamespace(), 'item');
+                    $itemNode->setAttribute('crawler', 'iParadigms');
+
+                    $resourceNode = $doc->createElementNS($deployment->getNamespace(), 'resource', $url);
+                    $itemNode->appendChild($resourceNode);
+                    $crawlerCollectionNode->appendChild($itemNode);
+                }
+            }
+
+            if ($crawlerCollectionNode !== null) {
+                $doiDataNode->appendChild($crawlerCollectionNode);
+            }
+
+        } catch (Throwable $e) {
+            error_log('Error in appendAsCrawledCollectionNodes: ' . $e->getMessage());
+            error_log($e->getTraceAsString());
+        }
+    }       
+
+    /**
+     * Append the collection node 'collection property="text-mining"' to the doi data node.
+     *
+     * This method generates a <collection> element with property="text-mining" for the provided 
+     * publication formats of a submission. It includes all proof files marked as viewable, 
+     * optionally filtering them based on whether they belong to a monograph or a chapter.
+     *
+     * Each file is added as an <item> with a <resource> URL pointing to its download location. 
+     * If the file includes a MIME type, it will be added as an attribute to the <resource> element.
+     *
+     * The resulting node is appended to the given <doi_data> node as part of the Crossref XML export.
+     *
+     * @param \DOMDocument $doc The XML document being generated.
+     * @param \DOMElement $doiDataNode The parent <doi_data> element to which the collection will be appended.
+     * @param \APP\submission\Submission $submission The submission object the files belong to.
+     * @param array $validFormats Array of \PKP\publicationFormats\PublicationFormat objects to process.
+     * @param bool $onlyMonographFiles Whether to include only monograph files (true) or chapter files (false).
+     */
+    public function appendTextMiningCollectionNodes($doc, $doiDataNode, $submission, $validFormats, $onlyMonographFiles = true, $chapterId = null)
+    {
+        try {
+            $deployment = $this->getDeployment();
+            $context = $deployment->getContext();
+            $request = Application::get()->getRequest();
+            $dispatcher = $this->_getDispatcher($request);
+    
+            // Get all visible proof files
+            $submissionFiles = Repo::submissionFile()
+                ->getCollector()
+                ->filterBySubmissionIds([$submission->getId()])
+                ->filterByFileStages([SubmissionFile::SUBMISSION_FILE_PROOF])
+                ->getMany()
+                ->filter(fn($file) => $file->getViewable());
+
+            $monographFileGenreIds = [3]; // ID for book manuscript
+            $chapterFileGenreIds = [4]; // ID for chapter manuscript
+                
+            $filteredFiles = $submissionFiles->filter(function ($file) use ($onlyMonographFiles, $monographFileGenreIds, $chapterFileGenreIds, $chapterId) {
+                $genreId = $file->getData('genreId');
+                if (!$file->getData('viewable')) {
+                    return false;
+                }
+                if ($onlyMonographFiles) {
+                    return in_array($genreId, $monographFileGenreIds);
+                }
+                return in_array($genreId, $chapterFileGenreIds) &&
+                       $file->getData('chapterId') == $chapterId;
+            });                        
+    
+            $filesByFormatId = [];
+            foreach ($filteredFiles as $file) {
+                $formatId = $file->getData('assocId');
+                if (!isset($filesByFormatId[$formatId])) {
+                    $filesByFormatId[$formatId] = [];
+                }
+                $filesByFormatId[$formatId][] = $file;
+            }
+    
+            $textMiningCollectionNode = null;
+    
+            foreach ($validFormats as $format) {
+                $formatId = $format->getId();
+                if (empty($filesByFormatId[$formatId])) {
+                    continue;
+                }
+    
+                foreach ($filesByFormatId[$formatId] as $file) {
+
+                    if ($textMiningCollectionNode === null) {
+                        $textMiningCollectionNode = $doc->createElementNS($deployment->getNamespace(), 'collection');
+                        $textMiningCollectionNode->setAttribute('property', 'text-mining');
+                    }                    
+
+                    $url = $dispatcher->url(
+                        $request,
+                        PKPApplication::ROUTE_PAGE,
+                        $context->getPath(),
+                        'catalog',
+                        'view',
+                        [$submission->getId(), $formatId, $file->getId()],
+                        null,
+                        null,
+                        true
+                    );
+    
+                    $itemNode = $doc->createElementNS($deployment->getNamespace(), 'item');
+                    $resourceNode = $doc->createElementNS($deployment->getNamespace(), 'resource', $url);
+    
+                    if ($file->getData('mimetype')) {
+                        $resourceNode->setAttribute('mime_type', $file->getData('mimetype'));
+                    }
+    
+                    $itemNode->appendChild($resourceNode);
+                    $textMiningCollectionNode->appendChild($itemNode);
+                }
+            }
+            if ($textMiningCollectionNode !== null) {
+                $doiDataNode->appendChild($textMiningCollectionNode);
+            }
+            //$doiDataNode->appendChild($textMiningCollectionNode);
+        } catch (Throwable $e) {
+            error_log('Error in appendTextMiningCollectionNodes: ' . $e->getMessage());
+        }
+    }
 
     /**
      * Create and return the Crossref book series metadata node 'series_metadata'.
@@ -403,6 +626,14 @@ class CrossrefXmlFilter extends NativeExportFilter
         $doiDataNode = $doc->createElementNS($deployment->getNamespace(), "doi_data");
 		$doiDataNode->appendChild($node = $doc->createElementNS($deployment->getNamespace(), 'doi', $this->xmlEscape($doi)));
 		$doiDataNode->appendChild($node = $doc->createElementNS($deployment->getNamespace(), 'resource', $this->xmlEscape($url)));
+        // Publication formats
+        $publicationFormats = $publication->getData('publicationFormats');
+        $validFormats = array_filter($publicationFormats, function($format) {
+            return $format->getIsAvailable() && 
+            $format->getIsApproved();
+        });
+        $this->appendAsCrawledCollectionNodes($doc, $doiDataNode, $submission, $validFormats, false, $chapter->getId());
+        $this->appendTextMiningCollectionNodes($doc, $doiDataNode, $submission, $validFormats, false, $chapter->getId()); 
 		$contentItemNode->appendChild($doiDataNode);
 
 		return $contentItemNode;
